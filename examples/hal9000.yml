@@ -1,0 +1,98 @@
+# Hal 9000 - AI Coding Agent
+#
+# Copy this file to your repository at .github/workflows/hal9000.yml
+# and update the configuration below.
+#
+# Prerequisites:
+# 1. Create an org-level or repo secret named LLM_API_KEY
+#    - For Stanford: Use your AI API Gateway key
+#    - For direct Anthropic: Use your Anthropic API key
+# 2. (Optional) Create a PAT_TOKEN secret for branch creation
+# 3. Update 'your-org' to match your GitHub organization
+#
+# Triggers:
+# - Label an issue with 'Hal 9000' to start
+# - Comment '/retry' on the issue to re-run with updated context
+# - React with 👍 or comment '/approve' to create a branch (no PR)
+# - Comment '/approve-pr' to create a branch AND a PR with auto-generated description
+
+name: Hal 9000
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  # Main job: triggered when issue is labeled 'Hal 9000'
+  solve-issue:
+    if: |
+      github.event_name == 'issues' && 
+      github.event.label.name == 'Hal 9000'
+    uses: your-org/hal9000-actions/.github/workflows/hal9000.yml@main
+    with:
+      # Choose: python, react, java-spring
+      language: python
+      
+      # Your test command
+      test_command: pytest
+      
+      # LiteLLM model string - examples:
+      # - anthropic/claude-sonnet-4-20250514 (default)
+      # - gemini/gemini-1.5-pro
+      # - openai/gpt-4o
+      # For Stanford Gateway, use model names from AI API Gateway Rates page
+      model: anthropic/claude-sonnet-4-20250514
+      
+      # (Optional) Custom API base URL for Stanford AI Gateway or other proxies
+      # api_base: https://your-stanford-gateway-url
+      
+      trigger_type: label
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Retry job: triggered when someone comments '/retry' on an issue with the label
+  retry-issue:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/retry') &&
+      contains(github.event.issue.labels.*.name, 'Hal 9000')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000.yml@main
+    with:
+      language: python
+      test_command: pytest
+      model: anthropic/claude-sonnet-4-20250514
+      trigger_type: retry
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Approval job: triggered when someone reacts with 👍 or comments /approve
+  # This creates a branch but NOT a PR
+  approve-changes:
+    if: |
+      github.event_name == 'issue_comment' && 
+      (contains(github.event.comment.body, '👍') || contains(github.event.comment.body, '/approve')) &&
+      !contains(github.event.comment.body, '/approve-plan') &&
+      !contains(github.event.comment.body, '/approve-pr') &&
+      !contains(github.event.comment.body, '/retry')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-approve.yml@main
+    with:
+      issue_number: ${{ github.event.issue.number }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+  # PR creation job: triggered when someone comments /approve-pr
+  # This creates a branch AND a PR with auto-generated description
+  create-pr:
+    if: |
+      github.event_name == 'issue_comment' && 
+      contains(github.event.comment.body, '/approve-pr')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
+    with:
+      issue_number: ${{ github.event.issue.number }}
+      # Cheap model for PR descriptions
+      pr_model: anthropic/claude-haiku-3-5-20241022
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}

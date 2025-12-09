@@ -1,0 +1,122 @@
+# Hal 9000 - AI Coding Agent with Planning Phase
+#
+# This workflow uses a two-phase approach:
+# 1. Planning: A more capable model (e.g., Opus) creates a detailed plan
+# 2. Execution: A faster model (e.g., Sonnet) implements the plan
+#
+# This is useful for complex issues where you want human review of the approach
+# before implementation begins.
+#
+# Triggers:
+# - Label an issue with 'Hal 9000 Plan' to generate a plan
+# - Comment '/retry-plan' to regenerate the plan
+# - Comment '/approve-plan' to execute with retries (up to 3 attempts)
+# - Comment '/approve-plan-single' to execute once only (cheaper/faster)
+# - After execution:
+#   - Comment '/approve' to create just a branch
+#   - Comment '/approve-pr' to create a branch AND a PR with auto-generated description
+
+name: Hal 9000 (with Planning)
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  # Phase 1: Generate plan when 'Hal 9000 Plan' label is added
+  generate-plan:
+    if: |
+      github.event_name == 'issues' && 
+      github.event.label.name == 'Hal 9000 Plan'
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-plan.yml@main
+    with:
+      language: python
+      test_command: pytest
+      
+      # Planning model - use a more capable model for better plans
+      # Options: anthropic/claude-opus-4-20250514, openai/gpt-4o, gemini/gemini-1.5-pro
+      planning_model: anthropic/claude-opus-4-20250514
+      
+      # Execution model - used after plan approval (can be faster/cheaper)
+      execution_model: anthropic/claude-sonnet-4-20250514
+      
+      # (Optional) Stanford AI Gateway URL
+      # api_base: https://your-stanford-gateway-url
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Retry plan generation
+  retry-plan:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/retry-plan') &&
+      contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-plan.yml@main
+    with:
+      language: python
+      test_command: pytest
+      planning_model: anthropic/claude-opus-4-20250514
+      execution_model: anthropic/claude-sonnet-4-20250514
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Phase 2a: Execute plan when approved (with retries)
+  execute-plan:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/approve-plan') &&
+      !contains(github.event.comment.body, '/approve-plan-single') &&
+      contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
+    with:
+      language: python
+      test_command: pytest
+      execution_model: anthropic/claude-sonnet-4-20250514
+      max_retries: 3
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Phase 2b: Execute plan with single attempt (no retries - cheaper/faster)
+  execute-plan-single:
+    if: |
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '/approve-plan-single') &&
+      contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
+    with:
+      language: python
+      test_command: pytest
+      execution_model: anthropic/claude-sonnet-4-20250514
+      max_retries: 1
+    secrets:
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+
+  # Phase 3a: Create branch only when code changes are approved with /approve
+  approve-changes:
+    if: |
+      github.event_name == 'issue_comment' && 
+      (contains(github.event.comment.body, '👍') || contains(github.event.comment.body, '/approve')) &&
+      !contains(github.event.comment.body, '/approve-plan') &&
+      !contains(github.event.comment.body, '/approve-pr') &&
+      !contains(github.event.comment.body, '/retry')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-approve.yml@main
+    with:
+      issue_number: ${{ github.event.issue.number }}
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+  # Phase 3b: Create branch AND PR when approved with /approve-pr
+  create-pr:
+    if: |
+      github.event_name == 'issue_comment' && 
+      contains(github.event.comment.body, '/approve-pr')
+    uses: your-org/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
+    with:
+      issue_number: ${{ github.event.issue.number }}
+      # Cheap model for PR descriptions (Haiku is fast and cheap)
+      pr_model: anthropic/claude-haiku-3-5-20241022
+    secrets:
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
