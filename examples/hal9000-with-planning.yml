@@ -7,6 +7,11 @@
 # This is useful for complex issues where you want human review of the approach
 # before implementation begins.
 #
+# Prerequisites:
+# 1. Create a repo secret named LLM_API_KEY (your Stanford/Anthropic API key)
+# 2. Create a repo secret named PAT_TOKEN (GitHub PAT with repo scope)
+# 3. Replace GITHUB_USERNAME_OR_ORG below with your GitHub username or org
+#
 # Triggers:
 # - Label an issue with 'Hal 9000 Plan' to generate a plan
 # - Comment '/retry-plan' to regenerate the plan
@@ -30,7 +35,7 @@ jobs:
     if: |
       github.event_name == 'issues' && 
       github.event.label.name == 'Hal 9000 Plan'
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-plan.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-plan.yml@main
     with:
       language: python
       test_command: pytest
@@ -53,7 +58,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '/retry-plan') &&
       contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-plan.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-plan.yml@main
     with:
       language: python
       test_command: pytest
@@ -69,7 +74,7 @@ jobs:
       contains(github.event.comment.body, '/approve-plan') &&
       !contains(github.event.comment.body, '/approve-plan-single') &&
       contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
     with:
       language: python
       test_command: pytest
@@ -84,7 +89,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '/approve-plan-single') &&
       contains(github.event.issue.labels.*.name, 'Hal 9000 Plan')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-execute-plan.yml@main
     with:
       language: python
       test_command: pytest
@@ -101,7 +106,7 @@ jobs:
       !contains(github.event.comment.body, '/approve-plan') &&
       !contains(github.event.comment.body, '/approve-pr') &&
       !contains(github.event.comment.body, '/retry')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-approve.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-approve.yml@main
     with:
       issue_number: ${{ github.event.issue.number }}
     secrets:
@@ -112,7 +117,7 @@ jobs:
     if: |
       github.event_name == 'issue_comment' && 
       contains(github.event.comment.body, '/approve-pr')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
     with:
       issue_number: ${{ github.event.issue.number }}
       # Cheap model for PR descriptions (Haiku is fast and cheap)

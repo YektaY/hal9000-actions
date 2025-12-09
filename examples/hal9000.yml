@@ -4,11 +4,9 @@
 # and update the configuration below.
 #
 # Prerequisites:
-# 1. Create an org-level or repo secret named LLM_API_KEY
-#    - For Stanford: Use your AI API Gateway key
-#    - For direct Anthropic: Use your Anthropic API key
-# 2. (Optional) Create a PAT_TOKEN secret for branch creation
-# 3. Update 'your-org' to match your GitHub organization
+# 1. Create a repo secret named LLM_API_KEY (your Stanford/Anthropic API key)
+# 2. Create a repo secret named PAT_TOKEN (GitHub PAT with repo scope)
+# 3. Replace GITHUB_USERNAME_OR_ORG below with your GitHub username or org
 #
 # Triggers:
 # - Label an issue with 'Hal 9000' to start
@@ -24,13 +22,17 @@ on:
   issue_comment:
     types: [created]
 
+# ⚠️ REPLACE THIS with your GitHub username or organization name
+env:
+  HAL9000_REPO: GITHUB_USERNAME_OR_ORG/hal9000-actions
+
 jobs:
   # Main job: triggered when issue is labeled 'Hal 9000'
   solve-issue:
     if: |
       github.event_name == 'issues' && 
       github.event.label.name == 'Hal 9000'
-    uses: your-org/hal9000-actions/.github/workflows/hal9000.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000.yml@main
     with:
       # Choose: python, react, java-spring
       language: python
@@ -58,7 +60,7 @@ jobs:
       github.event_name == 'issue_comment' &&
       contains(github.event.comment.body, '/retry') &&
       contains(github.event.issue.labels.*.name, 'Hal 9000')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000.yml@main
     with:
       language: python
       test_command: pytest
@@ -76,7 +78,7 @@ jobs:
       !contains(github.event.comment.body, '/approve-plan') &&
       !contains(github.event.comment.body, '/approve-pr') &&
       !contains(github.event.comment.body, '/retry')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-approve.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-approve.yml@main
     with:
       issue_number: ${{ github.event.issue.number }}
     secrets:
@@ -88,7 +90,7 @@ jobs:
     if: |
       github.event_name == 'issue_comment' && 
       contains(github.event.comment.body, '/approve-pr')
-    uses: your-org/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
+    uses: GITHUB_USERNAME_OR_ORG/hal9000-actions/.github/workflows/hal9000-create-pr.yml@main
     with:
       issue_number: ${{ github.event.issue.number }}
       # Cheap model for PR descriptions
