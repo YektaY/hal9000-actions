@@ -109,6 +109,24 @@ def parse_model_response(response_text: str) -> dict:
                 "content": content
             })
     
+    # Pattern for delete actions (no code block needed)
+    delete_pattern = re.compile(
+        r"###?\s*File:\s*`?([^`\n]+)`?\s*\n"
+        r"###?\s*Action:\s*delete",
+        re.IGNORECASE
+    )
+    
+    for match in delete_pattern.finditer(response_text):
+        path = match.group(1).strip()
+        # Check if we already have this file in changes
+        existing_paths = [c["path"] for c in result["changes"]]
+        if path not in existing_paths:
+            result["changes"].append({
+                "path": path,
+                "action": "delete",
+                "content": ""
+            })
+    
     return result
 
 

@@ -34,6 +34,13 @@ You MUST structure your response with an explanation followed by the exact file 
 ```
 ```
 
+For **delete** actions, you don't need a code block - just specify the file and action:
+
+```
+### File: `path/to/old_file.py`
+### Action: delete
+```
+
 ## Important Rules
 
 ### Code Quality

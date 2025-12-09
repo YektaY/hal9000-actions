@@ -44,6 +44,13 @@ Brief explanation of what you implemented, noting how it follows the approved pl
 ```
 ```
 
+For **delete** actions, you don't need a code block - just specify the file and action:
+
+```
+### File: `path/to/old_file.py`
+### Action: delete
+```
+
 ## Important Rules
 
 ### Code Quality
