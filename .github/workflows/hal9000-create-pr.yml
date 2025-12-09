@@ -1,0 +1,129 @@
+name: Hal 9000 - Create PR
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        description: 'Issue number to create PR for'
+        required: true
+        type: number
+      pr_model:
+        description: 'LiteLLM model for PR description (cheap/fast model)'
+        required: false
+        type: string
+        default: 'anthropic/claude-haiku-3-5-20241022'
+      api_base:
+        description: 'Custom API base URL'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      PAT_TOKEN:
+        required: true
+        description: 'Personal access token with repo write permissions'
+      LLM_API_KEY:
+        required: true
+        description: 'API key for LLM provider'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout consuming repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Checkout central actions repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/hal9000-actions
+          path: .hal9000
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .hal9000/scripts/requirements.txt
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: hal9000-changes-${{ inputs.issue_number }}
+          path: .hal9000-output
+
+      - name: Fetch issue details
+        id: issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/${{ inputs.issue_number }} > .hal9000-issue.json
+          echo "title=$(jq -r '.title' .hal9000-issue.json)" >> $GITHUB_OUTPUT
+
+      - name: Apply changes and create branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          python .hal9000/scripts/create_branch.py \
+            --issue-number ${{ inputs.issue_number }} \
+            --output-dir ".hal9000-output" \
+            --repo ${{ github.repository }}
+
+      - name: Generate PR description
+        id: pr_description
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.LLM_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.LLM_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: |
+          python .hal9000/scripts/generate_pr_description.py \
+            --issue-number ${{ inputs.issue_number }} \
+            --issue-file ".hal9000-issue.json" \
+            --output-dir ".hal9000-output" \
+            --model "${{ inputs.pr_model }}" \
+            ${{ inputs.api_base && format('--api-base "{0}"', inputs.api_base) || '' }} \
+            --output-file ".hal9000-pr-description.md"
+
+      - name: Create Pull Request
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          PR_BODY=$(cat .hal9000-pr-description.md)
+          BRANCH_NAME="hal9000/issue-${{ inputs.issue_number }}"
+          
+          # Create the PR
+          PR_URL=$(gh pr create \
+            --title "feat: ${{ steps.issue.outputs.title }}" \
+            --body "$PR_BODY" \
+            --head "$BRANCH_NAME" \
+            --base "main" \
+            2>&1) || true
+          
+          # If PR already exists, just get its URL
+          if echo "$PR_URL" | grep -q "already exists"; then
+            PR_URL=$(gh pr view "$BRANCH_NAME" --json url -q '.url')
+          fi
+          
+          echo "PR_URL=$PR_URL" >> $GITHUB_ENV
+
+      - name: Comment on issue with PR link
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment ${{ inputs.issue_number }} \
+            --repo ${{ github.repository }} \
+            --body "🎉 **Hal 9000** - Pull request created!
+
+${{ env.PR_URL }}
+
+The PR description was auto-generated. Feel free to edit it before merging."
