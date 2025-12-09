@@ -158,6 +158,7 @@ jobs:
         if: steps.hal9000.outputs.success == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HUSKY: "0"
         run: |
           CHANGES_BRANCH="hal9000/changes-issue-${{ github.event.issue.number }}"
           
@@ -165,19 +166,22 @@ jobs:
           git config user.name "Hal 9000"
           git config user.email "hal9000@github-actions.bot"
           
-          # Stash current changes
+          # Stash current changes to temp location
           cp -r .hal9000-output /tmp/hal9000-output
           
           # Create orphan branch for changes storage
           git checkout --orphan "$CHANGES_BRANCH"
           git rm -rf . || true
           
-          # Copy changes files
+          # Remove any leftover files
+          rm -rf .hal9000 .hal9000-plan .hal9000-output .hal9000-comments.json || true
+          
+          # Copy only the output files we need
           cp -r /tmp/hal9000-output/* .
           
           # Commit and push
           git add -A
-          git commit -m "Changes for issue #${{ github.event.issue.number }}"
+          git commit -m "Changes for issue #${{ github.event.issue.number }}" --no-verify
           git push origin "$CHANGES_BRANCH" --force
           
           echo "Changes stored in branch: $CHANGES_BRANCH"
