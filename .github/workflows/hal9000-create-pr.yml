@@ -119,11 +119,12 @@ jobs:
       - name: Comment on issue with PR link
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ env.PR_URL }}
         run: |
           gh issue comment ${{ inputs.issue_number }} \
             --repo ${{ github.repository }} \
             --body "🎉 **Hal 9000** - Pull request created!
 
-${{ env.PR_URL }}
+          ${PR_URL}
 
-The PR description was auto-generated. Feel free to edit it before merging."
+          The PR description was auto-generated. Feel free to edit it before merging."
