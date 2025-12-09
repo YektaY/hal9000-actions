@@ -10,38 +10,120 @@ from fnmatch import fnmatch
 
 # Default patterns to always ignore
 DEFAULT_IGNORE = [
+    # Git
     ".git",
     ".git/**",
+    
+    # Hal 9000 internals
     ".hal9000",
     ".hal9000/**",
     ".hal9000-output",
     ".hal9000-output/**",
+    ".hal9000-plan",
+    ".hal9000-plan/**",
+    
+    # Python
     "__pycache__",
     "__pycache__/**",
     "*.pyc",
     ".pytest_cache",
     ".pytest_cache/**",
+    ".venv",
+    ".venv/**",
+    "venv",
+    "venv/**",
+    "*.egg-info",
+    "*.egg-info/**",
+    
+    # Node/JavaScript/React
     "node_modules",
     "node_modules/**",
     ".next",
     ".next/**",
+    ".nuxt",
+    ".nuxt/**",
+    "dist",
+    "dist/**",
+    "build",
+    "build/**",
+    "out",
+    "out/**",
+    ".cache",
+    ".cache/**",
+    "coverage",
+    "coverage/**",
+    ".nyc_output",
+    ".nyc_output/**",
+    "*.lock",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "*.min.js",
+    "*.min.css",
+    "*.bundle.js",
+    "*.chunk.js",
+    "*.map",
+    ".parcel-cache",
+    ".parcel-cache/**",
+    "storybook-static",
+    "storybook-static/**",
+    
+    # Java
     "target",
     "target/**",
+    "*.class",
+    "*.jar",
+    
+    # IDE/Editor
     ".idea",
     ".idea/**",
     ".vscode",
     ".vscode/**",
-    "*.lock",
-    "package-lock.json",
-    "*.min.js",
-    "*.min.css",
-    "dist/**",
-    "build/**",
+    "*.swp",
+    "*.swo",
+    ".project",
+    ".classpath",
+    ".settings",
+    ".settings/**",
+    
+    # Environment/Config
     ".env",
     ".env.*",
+    ".env.local",
+    ".env.*.local",
+    
+    # Logs/Databases
     "*.log",
+    "logs",
+    "logs/**",
     "*.sqlite",
+    "*.sqlite3",
     "*.db",
+    
+    # OS files
+    ".DS_Store",
+    "Thumbs.db",
+    
+    # Test artifacts
+    ".playwright",
+    ".playwright/**",
+    "playwright-report",
+    "playwright-report/**",
+    "test-results",
+    "test-results/**",
+    
+    # Documentation build
+    "_site",
+    "_site/**",
+    ".docusaurus",
+    ".docusaurus/**",
+    "docs/_build",
+    "docs/_build/**",
+    
+    # Misc
+    "*.bak",
+    "*.tmp",
+    "*.temp",
 ]
 
 # Binary file extensions to skip

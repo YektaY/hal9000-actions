@@ -51,6 +51,7 @@ jobs:
       # api_base: https://your-stanford-gateway-url
     secrets:
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
   # Retry plan generation
   retry-plan:
@@ -66,6 +67,7 @@ jobs:
       execution_model: anthropic/claude-sonnet-4-20250514
     secrets:
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+      PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
 
   # Phase 2a: Execute plan when approved (with retries)
   execute-plan:

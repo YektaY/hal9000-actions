@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import litellm
@@ -96,27 +97,41 @@ def call_llm(
     system_prompt: str,
     user_message: str,
     api_base: str | None = None,
+    max_rate_limit_retries: int = 5,
 ) -> str:
-    """Call the LLM API via LiteLLM and return the response."""
+    """Call the LLM API via LiteLLM with rate limit retry."""
     
     kwargs = {}
     if api_base:
         kwargs["api_base"] = api_base
     
-    response = litellm.completion(
-        model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ],
-        max_tokens=8192,
-        **kwargs
-    )
+    for attempt in range(max_rate_limit_retries):
+        try:
+            response = litellm.completion(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                max_tokens=8192,
+                **kwargs
+            )
+            
+            usage = response.usage
+            print(f"Token usage - Input: {usage.prompt_tokens}, Output: {usage.completion_tokens}")
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            error_str = str(e).lower()
+            if "rate_limit" in error_str or "429" in error_str or "too many requests" in error_str:
+                wait_time = (2 ** attempt) * 30  # 30s, 60s, 120s, 240s, 480s
+                print(f"⏳ Rate limit hit. Waiting {wait_time} seconds before retry ({attempt + 1}/{max_rate_limit_retries})...")
+                time.sleep(wait_time)
+            else:
+                raise
     
-    usage = response.usage
-    print(f"Token usage - Input: {usage.prompt_tokens}, Output: {usage.completion_tokens}")
-    
-    return response.choices[0].message.content
+    raise Exception(f"Rate limit exceeded after {max_rate_limit_retries} retries")
 
 
 def run_tests(test_command: str, repo_path: str) -> tuple[bool, str]:

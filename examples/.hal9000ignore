@@ -1,0 +1,100 @@
+# .hal9000ignore - Files to exclude from Hal 9000 context
+# Add patterns here to reduce token usage and stay under rate limits
+#
+# This file uses the same syntax as .gitignore
+# Place this file in your repository root
+
+# ============================================
+# RECOMMENDED: Exclude these to reduce tokens
+# ============================================
+
+# Lock files (already in defaults, but be explicit)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+Gemfile.lock
+poetry.lock
+Cargo.lock
+composer.lock
+
+# Generated/compiled code
+dist/
+build/
+out/
+.next/
+.nuxt/
+coverage/
+*.min.js
+*.min.css
+*.bundle.js
+*.map
+
+# Large config files that rarely need changes
+tsconfig.json
+jsconfig.json
+babel.config.js
+webpack.config.js
+rollup.config.js
+vite.config.js
+jest.config.js
+.eslintrc*
+.prettierrc*
+
+# Documentation (unless you're changing docs)
+docs/
+*.md
+!README.md
+CHANGELOG*
+LICENSE*
+
+# Test fixtures and snapshots
+__snapshots__/
+*.snap
+fixtures/
+__fixtures__/
+__mocks__/
+
+# Assets (images, fonts, etc.)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.mp3
+*.mp4
+*.wav
+
+# CI/CD configs (unless that's what you're changing)
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+azure-pipelines.yml
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ============================================
+# PROJECT-SPECIFIC: Add your own patterns below
+# ============================================
+
+# Example: Large data files
+# data/
+# *.csv
+# *.json
+
+# Example: Generated API clients
+# src/generated/
+# src/api/generated/
+
+# Example: Vendor code
+# vendor/
+# third_party/
