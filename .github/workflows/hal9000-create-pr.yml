@@ -60,19 +60,26 @@ jobs:
           CHANGES_BRANCH="hal9000/changes-issue-${{ inputs.issue_number }}"
           mkdir -p .hal9000-output
           
-          # Fetch the changes branch
+          # Fetch the changes branch (fail if it doesn't exist)
+          echo "Fetching branch: $CHANGES_BRANCH"
           git fetch origin "$CHANGES_BRANCH"
           
           # Extract files from that branch
-          git checkout "origin/$CHANGES_BRANCH" -- . 2>/dev/null || true
+          git checkout "origin/$CHANGES_BRANCH" -- response.json 2>/dev/null || true
+          git checkout "origin/$CHANGES_BRANCH" -- changes.json 2>/dev/null || true
+          git checkout "origin/$CHANGES_BRANCH" -- explanation.md 2>/dev/null || true
           
           # Move to output directory
           mv response.json .hal9000-output/ 2>/dev/null || true
           mv changes.json .hal9000-output/ 2>/dev/null || true
           mv explanation.md .hal9000-output/ 2>/dev/null || true
           
-          # Return to main branch
-          git checkout main -- . 2>/dev/null || git checkout master -- . 2>/dev/null || true
+          # Verify we got the response file
+          if [ ! -f ".hal9000-output/response.json" ]; then
+            echo "❌ Error: response.json not found in changes branch"
+            echo "The changes may not have been stored properly. Try running /retry first."
+            exit 1
+          fi
           
           echo "Changes fetched from branch: $CHANGES_BRANCH"
           ls -la .hal9000-output/
