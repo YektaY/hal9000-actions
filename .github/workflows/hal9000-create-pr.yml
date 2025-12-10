@@ -95,7 +95,11 @@ jobs:
       - name: Apply changes and create branch
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          HUSKY: "0"
         run: |
+          # Clean up any metadata files that might have been checked out
+          rm -f response.json changes.json explanation.md 2>/dev/null || true
+          
           python .hal9000/scripts/create_branch.py \
             --issue-number ${{ inputs.issue_number }} \
             --output-dir ".hal9000-output" \
@@ -124,9 +128,9 @@ jobs:
           PR_BODY=$(cat .hal9000-pr-description.md)
           BRANCH_NAME="hal9000/issue-${{ inputs.issue_number }}"
           
-          # Create the PR
+          # Create the PR (without feat: prefix)
           PR_URL=$(gh pr create \
-            --title "feat: ${{ steps.issue.outputs.title }}" \
+            --title "${{ steps.issue.outputs.title }}" \
             --body "$PR_BODY" \
             --head "$BRANCH_NAME" \
             --base "main" \
