@@ -91,6 +91,17 @@ jobs:
             --repo-path "$(pwd)" \
             --output-dir ".hal9000-output"
 
+      - name: Post plan comment
+        if: steps.planner.outputs.success == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python .hal9000/scripts/post_plan_comment.py \
+            --issue-number ${{ github.event.issue.number }} \
+            --output-dir ".hal9000-output" \
+            --repo ${{ github.repository }} \
+            --implementation-model "${{ inputs.execution_model }}"
+
       - name: Store plan in branch
         if: steps.planner.outputs.success == 'true'
         env:
@@ -122,17 +133,6 @@ jobs:
           git push origin "$PLAN_BRANCH" --force
           
           echo "Plan stored in branch: $PLAN_BRANCH"
-
-      - name: Post plan comment
-        if: steps.planner.outputs.success == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python .hal9000/scripts/post_plan_comment.py \
-            --issue-number ${{ github.event.issue.number }} \
-            --output-dir ".hal9000-output" \
-            --repo ${{ github.repository }} \
-            --implementation-model "${{ inputs.execution_model }}"
 
       - name: Post planning failure
         if: steps.planner.outputs.success == 'false'
