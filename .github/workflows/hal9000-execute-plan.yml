@@ -103,15 +103,16 @@ jobs:
           # Fetch the plan branch
           git fetch origin "$PLAN_BRANCH"
           
-          # Extract plan files from that branch
-          git checkout "origin/$PLAN_BRANCH" -- . 2>/dev/null || git checkout "origin/$PLAN_BRANCH" -- plan.json plan_raw.md 2>/dev/null
+          # Extract plan files from that branch using git show (doesn't stage)
+          git show "origin/$PLAN_BRANCH:plan.json" > .hal9000-plan/plan.json 2>/dev/null || true
+          git show "origin/$PLAN_BRANCH:plan_raw.md" > .hal9000-plan/plan_raw.md 2>/dev/null || true
           
-          # Move to plan directory
-          mv plan.json .hal9000-plan/ 2>/dev/null || true
-          mv plan_raw.md .hal9000-plan/ 2>/dev/null || true
-          
-          # Return to main branch
-          git checkout ${{ github.ref_name }} -- . 2>/dev/null || true
+          # Verify we got the plan file
+          if [ ! -s ".hal9000-plan/plan.json" ]; then
+            echo "❌ Error: plan.json not found or empty in plan branch"
+            echo "The plan may not have been stored properly. Try running /retry-plan first."
+            exit 1
+          fi
           
           echo "Plan fetched from branch: $PLAN_BRANCH"
           ls -la .hal9000-plan/
